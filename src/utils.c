@@ -23,3 +23,4 @@ void* ft_calloc(size_t count, size_t size) {
         ((char*)res)[i] = 0;
     return (res);
 }
+

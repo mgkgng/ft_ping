@@ -31,8 +31,26 @@ t_ping* parse(int ac, char **av) {
     }
 }
 
+void check_address(char *hostname) {
+    struct addrinfo hints = {0};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    struct addrinfo *result;
+    int ret = getaddrinfo(hostname, servname, &hints, &result);
+    if (ret != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
+        exit(EXIT_FAILURE);
+    }
+
+}
+
 int main(int ac, char **av) {
     if (ac < 2)
         exit(0);
     t_ping *ping_info = parse(ac, av);
+
+    
+
 }
