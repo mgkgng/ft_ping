@@ -22,13 +22,14 @@ t_ping* parse(int ac, char **av) {
         if (av[i][0] == '-') {
             if (!av[i][1])
                 exit(0); // TODO error msg (invalid flag)
-            res->flags |= get_option(av[i] + 1);
+            res->flags |= get_options(av[i] + 1);
         } else {
             if (res->host)
                 exit(0); //TODO error msg
             res->host = av[i];
         }
     }
+    return (res);
 }
 
 void check_address(char *hostname) {
@@ -37,20 +38,35 @@ void check_address(char *hostname) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    struct addrinfo *result;
-    int ret = getaddrinfo(hostname, servname, &hints, &result);
+    struct addrinfo *res;
+    int ret = getaddrinfo(hostname, NULL, &hints, &res);
     if (ret != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
+        printf("ft_ping: cannot resolve %s: Unknown host\n", hostname);
         exit(EXIT_FAILURE);
     }
 
+    // Iterate over the list of addresses and print them
+    for (struct addrinfo *rp = res; rp != NULL; rp = rp->ai_next) {
+        char addrstr[INET6_ADDRSTRLEN];
+        void *addrptr = NULL;
+
+        if (rp->ai_family == AF_INET) {
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
+            addrptr = &ipv4->sin_addr;
+        } else {
+            fprintf(stderr, "Unknown address family: %d\n", rp->ai_family);
+            continue;
+        }
+
+        inet_ntop(rp->ai_family, addrptr, addrstr, sizeof(addrstr));
+        printf("%s\n", addrstr);
+    }
+    freeaddrinfo(res);
 }
 
 int main(int ac, char **av) {
     if (ac < 2)
         exit(0);
-    t_ping *ping_info = parse(ac, av);
-
-    
-
+    t_ping *ping_info = parse(ac, av);    
+    check_address(ping_info->host);
 }
