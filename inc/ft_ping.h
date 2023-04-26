@@ -11,6 +11,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#define PACKET_SIZE 64
+#define ICMP_ECHO_REQUEST 8
+
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
 
@@ -25,4 +28,5 @@ typedef struct s_ping {
     int interval;
     int timeout;
     char *host;
+    struct addrinfo *addr;
 } t_ping;

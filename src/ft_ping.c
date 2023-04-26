@@ -1,6 +1,8 @@
 #include "ft_ping.h"
 #include "libft.h"
 
+t_ping *g_ping_info;
+
 int get_options(char *flag_str) {
     int res = 0;
 
@@ -32,41 +34,62 @@ t_ping* parse(int ac, char **av) {
     return (res);
 }
 
-void check_address(char *hostname) {
+void get_address() {
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    struct addrinfo *res;
-    int ret = getaddrinfo(hostname, NULL, &hints, &res);
+    int ret = getaddrinfo(g_ping_info->host, NULL, &hints, &g_ping_info->addr);
     if (ret != 0) {
-        printf("ft_ping: cannot resolve %s: Unknown host\n", hostname);
+        fprintf(stderr, "ft_ping: cannot resolve %s: Unknown host\n", g_ping_info->host);
         exit(EXIT_FAILURE);
     }
+}
 
-    // Iterate over the list of addresses and print them
-    for (struct addrinfo *rp = res; rp != NULL; rp = rp->ai_next) {
-        char addrstr[INET6_ADDRSTRLEN];
-        void *addrptr = NULL;
-
-        if (rp->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
-            addrptr = &ipv4->sin_addr;
-        } else {
-            fprintf(stderr, "Unknown address family: %d\n", rp->ai_family);
-            continue;
-        }
-
-        inet_ntop(rp->ai_family, addrptr, addrstr, sizeof(addrstr));
-        printf("%s\n", addrstr);
-    }
-    freeaddrinfo(res);
+void terminate() {
+    freeaddrinfo(g_ping_info->addr);
+    free(g_ping_info);
 }
 
 int main(int ac, char **av) {
     if (ac < 2)
         exit(0);
-    t_ping *ping_info = parse(ac, av);    
-    check_address(ping_info->host);
+    g_ping_info = parse(ac, av);    
+    get_address();
+
+    // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    // if (sockfd < 0) {
+    //     perror("ft_ping: socket");
+    //     exit(EXIT_FAILURE);
+    // }
+
+    if (g_ping_info->addr->ai_family != AF_INET) {
+        fprintf(stderr, "Only IPv4 accepted\n");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *) g_ping_info->addr->ai_addr;
+
+    char ipstr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
+    printf("IP address: %s\n", ipstr);
+    inet_pton(AF_INET, ipstr, &ipv4->sin_addr);
+    printf("IP address: %s\n", ipstr);
+
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd == -1) {
+        perror("socket");
+        return EXIT_FAILURE;
+    }
+
+    // Set socket options to enable ICMP protocol
+    const int on = 1;
+    if (setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) == -1) {
+        perror("setsockopt");
+        return EXIT_FAILURE;
+    }
+
+
+    terminate();
 }
