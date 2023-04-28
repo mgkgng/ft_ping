@@ -3,6 +3,11 @@
 
 t_ping *g_ping_info;
 
+void exit_error(char *msg) {
+    perror(msg);
+    exit(EXIT_FAILURE);
+}
+
 int get_options(char *flag_str) {
     int res = 0;
 
@@ -11,8 +16,10 @@ int get_options(char *flag_str) {
             res |= FLAG_V;
         else if (flag_str[i] == 'h')
             res |= FLAG_H;
-        else
-            exit(0); //TODO error msg (invalid flag)
+        else {
+            fprintf(stderr, "Error: Invalid flag\n");
+            exit(EXIT_FAILURE);
+        }
     }
     return (res);
 }
@@ -22,12 +29,16 @@ t_ping* parse(int ac, char **av) {
 
     for (int i = 1; i < ac; i++) {
         if (av[i][0] == '-') {
-            if (!av[i][1])
-                exit(0); // TODO error msg (invalid flag)
+            if (!av[i][1]) {
+                fprintf(stderr, "Error: Invalid flag\n");
+                exit(EXIT_FAILURE);
+            }
             res->flags |= get_options(av[i] + 1);
         } else {
-            if (res->host)
-                exit(0); //TODO error msg
+            if (res->host) {
+                fprintf(stderr, "Error: Invalid flag\n");
+                exit(EXIT_FAILURE);
+            }
             res->host = av[i];
         }
     }
@@ -44,8 +55,29 @@ void get_address() {
     if (ret != 0) {
         fprintf(stderr, "ft_ping: cannot resolve %s: Unknown host\n", g_ping_info->host);
         exit(EXIT_FAILURE);
+    } else if (g_ping_info->addr->ai_family != AF_INET) {
+        fprintf(stderr, "Not a valid IPv4 address\n");
+        exit(EXIT_FAILURE);
     }
 }
+
+unsigned short checksum(void *b, int len) {
+    unsigned short *buf = b;
+    unsigned int sum = 0;
+    unsigned short result;
+
+    for (sum = 0; len > 1; len -= 2) {
+        sum += *buf++;
+    }
+    if (len == 1) {
+        sum += *(unsigned char*)buf;
+    }
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    result = ~sum;
+    return result;
+}
+
 
 void terminate() {
     freeaddrinfo(g_ping_info->addr);
@@ -58,17 +90,6 @@ int main(int ac, char **av) {
     g_ping_info = parse(ac, av);    
     get_address();
 
-    // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    // if (sockfd < 0) {
-    //     perror("ft_ping: socket");
-    //     exit(EXIT_FAILURE);
-    // }
-
-    if (g_ping_info->addr->ai_family != AF_INET) {
-        fprintf(stderr, "Only IPv4 accepted\n");
-        exit(EXIT_FAILURE);
-    }
-
     struct sockaddr_in *ipv4 = (struct sockaddr_in *) g_ping_info->addr->ai_addr;
 
     char ipstr[INET_ADDRSTRLEN];
@@ -77,19 +98,32 @@ int main(int ac, char **av) {
     inet_pton(AF_INET, ipstr, &ipv4->sin_addr);
     printf("IP address: %s\n", ipstr);
 
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (sockfd == -1) {
-        perror("socket");
-        return EXIT_FAILURE;
-    }
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    assert(sockfd != -1);
 
     // Set socket options to enable ICMP protocol
     const int on = 1;
-    if (setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) == -1) {
-        perror("setsockopt");
-        return EXIT_FAILURE;
-    }
+    assert(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) != -1);
 
+    // char buffer[576];
+    struct icmp *icmp_packet = {0};
+
+    // memset(buffer, 0, sizeof(buffer));
+    // icmp_packet = (struct icmp *)buffer;
+    icmp_packet->icmp_type = ICMP_ECHO;
+    icmp_packet->icmp_code = 0;
+    icmp_packet->icmp_id = getpid();
+    icmp_packet->icmp_seq = 0;
+    icmp_packet->icmp_cksum = 0;
+    icmp_packet->icmp_cksum = checksum(icmp_packet, sizeof(struct icmp));
+
+    while (1) {
+        // send ping to the address
+        int ret = sendto(sockfd, icmp_packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
+        if (ret < 0)
+            exit_error("ft_ping: sendto");
+        usleep(1000000);
+    }
 
     terminate();
 }
