@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip.h>
 
 #define PACKET_SIZE 64
 #define ICMP_ECHO_REQUEST 8

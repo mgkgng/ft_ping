@@ -3,7 +3,8 @@
 
 t_ping *g_ping_info;
 int g_sockfd;
-struct icmp g_packet;
+int g_id = 0;
+int g_seq = 0;
 
 void exit_error(char *msg) {
     perror(msg);
@@ -94,13 +95,15 @@ void init_socket() {
     printf("Socket options set.\n");
 }
 
-void create_packet() {
+struct icmp create_packet() {
     // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
-    g_packet.icmp_type = ICMP_ECHO;
-    g_packet.icmp_code = 0;
-    g_packet.icmp_id = getpid();
-    g_packet.icmp_seq = 0;
-    g_packet.icmp_cksum = 0;
+    struct icmp res;
+    res.icmp_type = ICMP_ECHO_REQUEST;
+    res.icmp_code = 0;
+    res.icmp_id = getpid();
+    res.icmp_seq = g_seq++;
+    res.icmp_cksum = 0;
+    return (res);
 }
 
 int main(int ac, char **av) {
@@ -109,11 +112,14 @@ int main(int ac, char **av) {
     parse(ac, av);
     get_address();
     init_socket();
-    create_packet();    
+    struct iphdr *header;
+    struct icmphdr *icmp_header;
 
-    
+    (void) header;
+    (void) icmp_header;
 
     while (1) {
+        struct icmp packet = create_packet();
         // send ping to the address
         int ret = sendto(g_sockfd, &packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
         if (ret < 0)
