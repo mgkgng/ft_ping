@@ -98,12 +98,22 @@ int main(int ac, char **av) {
     inet_pton(AF_INET, ipstr, &ipv4->sin_addr);
     printf("IP address: %s\n", ipstr);
 
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    assert(sockfd != -1);
+    // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
+    // Ref2: https://www.techtarget.com/searchnetworking/definition/time-to-live#:~:text=Time%2Dto%2Dlive%20(TTL)%20is%20a%20value%20for,lifetime%2C%20depends%20on%20the%20context.
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd < 0) {
+        fprintf(stderr, "ft_ping: socket: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    printf("Socket created.\n");
 
     // Set socket options to enable ICMP protocol
-    const int on = 1;
-    assert(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) != -1);
+    const int ttl = 255;
+    if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
+        fprintf(stderr, "ft_ping: setsockopt: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    printf("Socket options set.\n");
 
     // char buffer[576];
     struct icmp *icmp_packet = {0};
@@ -117,6 +127,7 @@ int main(int ac, char **av) {
     icmp_packet->icmp_cksum = 0;
     icmp_packet->icmp_cksum = checksum(icmp_packet, sizeof(struct icmp));
 
+    printf("coucou\n");
     while (1) {
         // send ping to the address
         int ret = sendto(sockfd, icmp_packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 

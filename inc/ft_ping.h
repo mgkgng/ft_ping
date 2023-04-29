@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <errno.h>
 
 #define PACKET_SIZE 64
 #define ICMP_ECHO_REQUEST 8
