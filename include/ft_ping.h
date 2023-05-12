@@ -30,6 +30,7 @@ typedef struct s_ping {
     int interval;
     int timeout;
     char *host;
+    char *dest;
     struct addrinfo *addr;
 } t_ping;
 
@@ -49,3 +50,8 @@ struct icmphdr {
         } frag;
     } un;
 };
+
+t_ping *parse(int ac, char **av);
+int init_socket();
+unsigned short compute_icmp_checksum (unsigned short *paddress, int len);
+void create_packet(char *packet);
