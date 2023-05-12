@@ -1,0 +1,76 @@
+Network Layer:
+The concept of layers in computer networking refers to the hierarchical organization of protocols and functions that enable communication between devices over a network.
+The layers are part of the network architecture models, such as the OSI (Open Systems Interconnection) model and the TCP/IP model, which provide a framework for understanding and designing network systems.
+
+- OSI Model:
+The OSI model was developed by ISO (International Organization for Standardization) in the late 1970s. It consists of seven layers, each responsible for specific functions and services.
+
+1. Physical Layer:
+deals with the physical transmission of data over the network, including electrical, optical and mechanical specifications.
+2. Data Link Layer:
+provides error-free and reliable transfer of data frames between adjacent network nodes.
+3. Network Layer
+handles logical addressing and routing of data packets across multiple networks. IP (Internet Protocol) operates at this layer.
+4. Transport Layer:
+ensures reliable and ordered delivery of data between endpoints. TCP and UDP are transport layer protocols.
+5. Session Layer:
+establishes, maintains and terminates communication sessions between applications.
+6. Presentation Layer:
+handles data formatting, encryption and compression to ensure that data is presented correctly to the application layer
+7. Application Layer:
+provides a user interface and supports specific network applications, such as email, file transfer and web browsing.
+
+- TCP/IP Model:
+The TCP/IP model is a simpler and widely used network architecture. It combines multiple layers of the OSI model into four layers:
+
+1. Network Interface Layer (or Network Access Layer):
+corresponds to the physical and data link layer of the OSI model.
+2. Internet Layer: 
+equivalent to the network layer in the OSI model, responsible for IP addressing, routing and packet fragmentation.
+3. Transport Layer
+Equivalent to the transport layer in the OSI model, providing reliable or unreliable data transfer. TCP and UDP operate at this layer.
+4. Application Layer:
+Combines the functionality of the session, presenation and application layers in the OSI model. It encompasses various application protocols like HTTP, FTP, SMTP and DNS.
+
+--------------------------
+
+TCP vs UDP?
+TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are two widely used transport layer protocols in computer networks. They provide different methods for transmitting data between devices and serve different purposes based on the requirements of the application.
+
+TCP:
+a connection-oriented protocol that offers reliable, ordered and error-checked delivery of data packets over an IP network. It ensures that data is transmitted accurately and in the correct sequence. TCP is commonly used in applications that require reliable and accurate data transfer, such as web browsing, file transfer, email and other applications where data integrity is crucial. However, the additional overhead and complexity of TCP can introduce some latency, making it less suitable for real-time applications that prioritize speed over reliability.
+
+UDP:
+a connectionless protocol that provides a simple and lightweight method of transmitting data packets over an IP network. It offers a best-effort delivery service without guarantees of reliability, ordering or error checking. UDP's simplicity and low overhead make it useful in scenarios where timely delivery of data is more critical than the occasional loss of a packet. It is particularly beneficial in situations where retransmission or error correction would introduce excessive delays, hindering the real-time nature of the application.
+
+--------------------------------------
+
+Ping?
+
+The Ping command is a utility that operates using the Internet Control Message Protocol (ICMP). ICMP is part of the network layer (Layer 3) i nthe OSI model and is responsible for diagnostic and control functions in IP networks.
+When you use the Ping command, it sens ICMP Echo Request messages from a source device to a destination device. These messages are sent at the network layer using ICMP, which is separate from the transport layer (Layer 4) where TCP and UDP reside.
+
+Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
+
+Socket?
+Usually, sockets are used to build applications on top of a transport protocol (Stream sockets (TCP) / Datagram sockets (UDP)). However, some applications need to access a lower layer protocol. (i.e., ICMP, IGMP, Experimental transport protocols). For this, we can use a "raw" socket which allows direct access to IP (used to build applications on top of network layer).
+=> socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
+
+Socket Types:
+    - Stream socket (SOCK_STREAM)
+    - Datagram socket (SOCK_DGRAM)
+    - Raw protocol interface (SOCK_RAW)
+    - Reliably delivered message (SOCK_RDM)
+    - Sequenced packet stream (SOCK_SEQPACKET)
+
+ICMP?
+ICMP messages are encapsulated in IP datagrams. (A datagram refers to an independent, self-contained unit of data that is transmitted over a network. It is a basic data structure used in connectionless protocols, such as UDP. In contrast, protocls like TCP use a stream-based approach, which data is transmitted as a continuous stream rather than discrete datagram.)
+
+ICMP Message Format
+    - TYPE: type of ICMP Message
+    - CODE: used by some types to indicate a specific condition
+    - CHECKSUM: checksum over full message
+    - Contents depend on TYPE and CODE
+
+    Checksum?
+    A checksum is a value calculated from a data set or a data packet used to detect errors during data transmission or storage. It serves as a simple integrity check that helps ensure the accuracy and reliability of data. (A checksum allows for the detection of erros by generating a unique value based on the data and comparing it at the receiving end to ensure that it matches the original value.)

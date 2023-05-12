@@ -17,17 +17,18 @@
 #include <netinet/ip.h>
 
 #define PACKET_SIZE 64
-#define ICMP_ECHO_REQUEST 8
+#define ICMP_HEADER_SIZE 8
+// #define ICMP_ECHO_REQUEST 8
 
-#define FLAG_V (1 << 0)
-#define FLAG_H (1 << 1)
+// #define FLAG_V (1 << 0)
+// #define FLAG_H (1 << 1)
 
-#define ICMP_ECHOREPLY 0
-#define ICMP_UNREACH 3
-#define ICMP_REDIRECT 5
-#define ICMP_ECHO 8
-#define ICMP_TIMXCEED 11
-#define ICMP_PARAMPROB 12
+// #define ICMP_ECHOREPLY 0
+// #define ICMP_UNREACH 3
+// #define ICMP_REDIRECT 5
+// #define ICMP_ECHO 8
+// #define ICMP_TIMXCEED 11
+// #define ICMP_PARAMPROB 12
 
 typedef struct s_ping {
     int flags;
@@ -39,3 +40,21 @@ typedef struct s_ping {
     char *host;
     struct addrinfo *addr;
 } t_ping;
+
+// Create ICMP header
+struct icmphdr {
+    uint8_t type;
+    uint8_t code;
+    uint16_t checksum;
+    union {
+        struct {
+            uint16_t id;
+            uint16_t sequence;
+        } echo;
+        uint32_t gateway;
+        struct {
+            uint16_t __unused;
+            uint16_t mtu;
+        } frag;
+    } un;
+};

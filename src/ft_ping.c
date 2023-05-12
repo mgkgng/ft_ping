@@ -1,5 +1,6 @@
 #include "ft_ping.h"
 #include "libft.h"
+#include <pcap.h>
 
 t_ping *g_ping_info;
 int g_sockfd;
@@ -25,6 +26,19 @@ int get_options(char *flag_str) {
         }
     }
     return (res);
+}
+
+unsigned short get_checksum(unsigned short *buffer, int length) {
+    unsigned long sum = 0;
+    while (length > 1) {
+        sum += *buffer++;
+        length -= 2;
+    }
+    if (length == 1)
+        sum += *(unsigned char *)buffer;
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    return (unsigned short)(~sum);
 }
 
 void parse(int ac, char **av) {
@@ -95,15 +109,51 @@ void init_socket() {
     printf("Socket options set.\n");
 }
 
-struct icmp create_packet() {
+char *create_packet(char *dest) {
     // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
-    struct icmp res;
-    res.icmp_type = ICMP_ECHO_REQUEST;
-    res.icmp_code = 0;
-    res.icmp_id = getpid();
-    res.icmp_seq = g_seq++;
-    res.icmp_cksum = 0;
-    return (res);
+
+    char packet[PACKET_SIZE];
+    ft_memset(packet, 0, PACKET_SIZE);
+
+    // Linux version
+    // struct iphdr *ip_header = (struct iphdr *) packet;
+    // ip_header->ihl = 5;
+    // ip_header->version = 4;
+    // ip_header->tos = 0;
+    // ip_header->tot_len = sizeof(struct iphdr) + sizeof(struct icmphdr);
+    // ip_header->id = htons(g_id++);
+    // ip_header->frag_off = 0;
+    // ip_header->ttl = 255;
+    // ip_header->protocol = IPPROTO_ICMP;
+    // ip_header->check = 0;
+    // ip_header->saddr = 0;
+    // ip_header->daddr = ((struct sockaddr_in *)g_ping_info->addr->ai_addr)->sin_addr.s_addr;
+    // ip_header->check = get_checksum((unsigned short *)packet, ip_header->tot_len);
+
+    // MacOS version (after Catalina)
+    struct ip *ip_header = (struct ip *) packet;
+    ip_header->ip_hl = 5;
+    ip_header->ip_v = 4;
+    ip_header->ip_tos = 0;
+    ip_header->ip_len = sizeof(struct ip) + sizeof(struct icmphdr);
+    ip_header->ip_id = htons(getpid());
+    ip_header->ip_off = 0;
+    ip_header->ip_ttl = 64;
+    ip_header->ip_p = IPPROTO_ICMP;
+    ip_header->ip_src.s_addr = inet_addr(SOURCE_IP_HERE);
+    ip_header->ip_dst.s_addr = inet_addr(DEST_IP_HERE);
+    ip_header->ip_sum = 0;
+    ip_header->ip_sum = get_checksum((unsigned short *)ip_header, sizeof(struct ip));
+
+    struct icmphdr *icmp_header = (struct icmphdr *) (packet + sizeof(struct ip));
+    icmp_header->type = ICMP_ECHO;
+    icmp_header->code = 0;
+    icmp_header->checksum = 0;
+    icmp_header->un.echo.id = htons(getpid());
+    icmp_header->un.echo.sequence = htons(1);
+    icmp_header->checksum = get_checksum((unsigned short *)icmp_header, ICMP_HEADER_SIZE);
+
+    return packet;
 }
 
 int main(int ac, char **av) {
@@ -112,19 +162,14 @@ int main(int ac, char **av) {
     parse(ac, av);
     get_address();
     init_socket();
-    struct iphdr *header;
-    struct icmphdr *icmp_header;
-
-    (void) header;
-    (void) icmp_header;
 
     while (1) {
-        struct icmp packet = create_packet();
+        // struct icmp packet = create_packet();
         // send ping to the address
-        int ret = sendto(g_sockfd, &packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
-        if (ret < 0)
-            exit_error("ft_ping: sendto");
-        usleep(1000000);
+        // int ret = sendto(g_sockfd, &packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
+        // if (ret < 0)
+        //     exit_error("ft_ping: sendto");
+        // usleep(1000000);
     }
 
     terminate();
