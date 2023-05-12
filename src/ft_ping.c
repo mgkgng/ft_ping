@@ -15,6 +15,12 @@ void exit_error(char *msg) {
     exit(EXIT_FAILURE);
 }
 
+void terminate() {
+    close(g_sockfd);
+    freeaddrinfo(g_ping_info->addr);
+    free(g_ping_info);
+}
+
 int get_options(char *flag_str) {
     int res = 0;
 
@@ -94,7 +100,7 @@ void parse(int ac, char **av) {
 }
 
 void get_address() {
-    struct addrinfo hints, *res, *p;
+    struct addrinfo hints, *p;
     char ipstr[INET_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
@@ -102,27 +108,29 @@ void get_address() {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    int ret = getaddrinfo(g_ping_info->host, NULL, &hints, &res);
+    int ret = getaddrinfo(g_ping_info->host, NULL, &hints, &g_ping_info->addr);
     if (ret != 0) {
         fprintf(stderr, "ft_ping: cannot resolve %s: Unknown host\n", g_ping_info->host);
+        terminate();
         exit(EXIT_FAILURE);
-    } else if (res->ai_family != AF_INET) {
+    } else if (g_ping_info->addr->ai_family != AF_INET) {
         fprintf(stderr, "Not a valid IPv4 address\n");
+        terminate();
         exit(EXIT_FAILURE);
     }
 
-    for (p = res; p != NULL; p = p->ai_next) {
+    for (p = g_ping_info->addr; p != NULL; p = p->ai_next) {
         if (p->ai_family == AF_INET) {  // IPv4
             struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
             if (inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, sizeof ipstr) != NULL) {
-                freeaddrinfo(res);
                 strcpy(g_dest_ip, ipstr);
+                return ; 
             }
         }
     }
 
-    freeaddrinfo(res);
     fprintf(stderr, "Failed to retrieve IPv4 address for %s\n", g_ping_info->host);
+    terminate();
     exit(EXIT_FAILURE);
 
 
@@ -135,10 +143,7 @@ void get_address() {
     // printf("IP address: %s\n", ipstr);
 }
 
-void terminate() {
-    freeaddrinfo(g_ping_info->addr);
-    free(g_ping_info);
-}
+
 
 void init_socket() {
     // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
@@ -159,11 +164,11 @@ void init_socket() {
     printf("Socket options set.\n");
 }
 
-void create_packet(char **packet) {
+void create_packet(char *packet) {
     // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
-
+    printf("ssee\n");
     memset(packet, 0, PACKET_SIZE);
-
+    printf("boonjour\n");
     // Linux version
     // struct iphdr *ip_header = (struct iphdr *) packet;
     // ip_header->ihl = 5;
@@ -189,11 +194,15 @@ void create_packet(char **packet) {
     ip_header->ip_off = 0;
     ip_header->ip_ttl = 64;
     ip_header->ip_p = IPPROTO_ICMP;
+    printf("dongdong\n");
+    printf("checky checky %s \n %s\n", g_local_ip, g_dest_ip);
+
     ip_header->ip_src.s_addr = inet_addr(g_local_ip);
     ip_header->ip_dst.s_addr = inet_addr(g_dest_ip);
     ip_header->ip_sum = 0;
     ip_header->ip_sum = get_checksum((unsigned short *)ip_header, sizeof(struct ip));
 
+    printf("coucou\n");
     struct icmphdr *icmp_header = (struct icmphdr *) (packet + sizeof(struct ip));
     icmp_header->type = ICMP_ECHO;
     icmp_header->code = 0;
@@ -212,16 +221,42 @@ int main(int ac, char **av) {
     get_local_ip();
     init_socket();
 
+    printf("check\n");
     char packet[PACKET_SIZE];
+    char buffer[PACKET_SIZE];
     while (1) {
-        create_packet((char **) &packet);
+        create_packet(packet);
         // send ping to the address
         // int ret = sendto(g_sockfd, &packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
         // if (ret < 0)
         //     exit_error("ft_ping: sendto");
+
+        // Send packet to server
+        ssize_t bytes_sent = sendto(g_sockfd, packet, PACKET_SIZE, 0, (struct sockaddr *) &g_ping_info->addr, sizeof(g_ping_info->addr));
+        if (bytes_sent < 0) {
+            perror("Packet sending failed");
+            terminate();
+            exit(EXIT_FAILURE);
+        }
+
+        // Receive response from server
+        struct sockaddr_in client_addr;
+        socklen_t addr_len = sizeof(client_addr);
+        ssize_t bytes_received = recvfrom(g_sockfd, buffer, PACKET_SIZE, 0, (struct sockaddr *) &client_addr, &addr_len);
+        if (bytes_received < 0) {
+            perror("Response receiving failed");
+            terminate();
+            exit(EXIT_FAILURE);
+        }
+        printf("recevied!! %s\n", buffer);
+
         printf("ding dong\n");
         usleep(1000000);
     }
+
+
+    // Close the socket
+
 
     terminate();
 }
