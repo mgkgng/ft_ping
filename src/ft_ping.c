@@ -7,6 +7,9 @@ int g_sockfd;
 int g_id = 0;
 int g_seq = 0;
 
+char g_local_ip[INET_ADDRSTRLEN] = {0}; 
+char g_dest_ip[INET_ADDRSTRLEN] = {0};
+
 void exit_error(char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
@@ -41,6 +44,35 @@ unsigned short get_checksum(unsigned short *buffer, int length) {
     return (unsigned short)(~sum);
 }
 
+void get_local_ip() {
+    struct addrinfo hints, *res, *p;
+    char host[NI_MAXHOST];
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+
+    // Get local address info
+    if (getaddrinfo("localhost", NULL, &hints, &res) != 0)
+        exit_error("getaddrinfo: Failed to get local address info\n");
+
+    for (p = res; p != NULL; p = p->ai_next) {
+        void* addr;
+        if (p->ai_family == AF_INET) {
+            struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+            addr = &(ipv4->sin_addr);
+        } else
+            continue;
+        if (inet_ntop(p->ai_family, addr, host, sizeof host) != NULL) {
+            freeaddrinfo(res);
+            strcpy(g_local_ip, host);
+            return ;
+        }
+    }
+    freeaddrinfo(res);
+    fprintf(stderr, "Failed to retrieve local IP address\n");
+    exit(EXIT_FAILURE);
+}
+
 void parse(int ac, char **av) {
     g_ping_info = ft_calloc(1, sizeof(t_ping));
 
@@ -62,27 +94,45 @@ void parse(int ac, char **av) {
 }
 
 void get_address() {
-    struct addrinfo hints = {0};
-    hints.ai_family = AF_UNSPEC;
+    struct addrinfo hints, *res, *p;
+    char ipstr[INET_ADDRSTRLEN];
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    int ret = getaddrinfo(g_ping_info->host, NULL, &hints, &g_ping_info->addr);
+    int ret = getaddrinfo(g_ping_info->host, NULL, &hints, &res);
     if (ret != 0) {
         fprintf(stderr, "ft_ping: cannot resolve %s: Unknown host\n", g_ping_info->host);
         exit(EXIT_FAILURE);
-    } else if (g_ping_info->addr->ai_family != AF_INET) {
+    } else if (res->ai_family != AF_INET) {
         fprintf(stderr, "Not a valid IPv4 address\n");
         exit(EXIT_FAILURE);
     }
 
-    struct sockaddr_in *ipv4 = (struct sockaddr_in *) g_ping_info->addr->ai_addr;
+    for (p = res; p != NULL; p = p->ai_next) {
+        if (p->ai_family == AF_INET) {  // IPv4
+            struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+            if (inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, sizeof ipstr) != NULL) {
+                freeaddrinfo(res);
+                strcpy(g_dest_ip, ipstr);
+            }
+        }
+    }
 
-    char ipstr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
-    printf("IP address: %s\n", ipstr);
-    inet_pton(AF_INET, ipstr, &ipv4->sin_addr);
-    printf("IP address: %s\n", ipstr);
+    freeaddrinfo(res);
+    fprintf(stderr, "Failed to retrieve IPv4 address for %s\n", g_ping_info->host);
+    exit(EXIT_FAILURE);
+
+
+    // struct sockaddr_in *ipv4 = (struct sockaddr_in *) g_ping_info->addr->ai_addr;
+
+    // char ipstr[INET_ADDRSTRLEN];
+    // inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
+    // printf("IP address: %s\n", ipstr);
+    // inet_pton(AF_INET, ipstr, &ipv4->sin_addr);
+    // printf("IP address: %s\n", ipstr);
 }
 
 void terminate() {
@@ -109,11 +159,10 @@ void init_socket() {
     printf("Socket options set.\n");
 }
 
-char *create_packet(char *dest) {
+void create_packet(char **packet) {
     // Ref: https://courses.cs.vt.edu/cs4254/fall04/slides/raw_1.pdf
 
-    char packet[PACKET_SIZE];
-    ft_memset(packet, 0, PACKET_SIZE);
+    memset(packet, 0, PACKET_SIZE);
 
     // Linux version
     // struct iphdr *ip_header = (struct iphdr *) packet;
@@ -140,8 +189,8 @@ char *create_packet(char *dest) {
     ip_header->ip_off = 0;
     ip_header->ip_ttl = 64;
     ip_header->ip_p = IPPROTO_ICMP;
-    ip_header->ip_src.s_addr = inet_addr(SOURCE_IP_HERE);
-    ip_header->ip_dst.s_addr = inet_addr(DEST_IP_HERE);
+    ip_header->ip_src.s_addr = inet_addr(g_local_ip);
+    ip_header->ip_dst.s_addr = inet_addr(g_dest_ip);
     ip_header->ip_sum = 0;
     ip_header->ip_sum = get_checksum((unsigned short *)ip_header, sizeof(struct ip));
 
@@ -153,7 +202,6 @@ char *create_packet(char *dest) {
     icmp_header->un.echo.sequence = htons(1);
     icmp_header->checksum = get_checksum((unsigned short *)icmp_header, ICMP_HEADER_SIZE);
 
-    return packet;
 }
 
 int main(int ac, char **av) {
@@ -161,15 +209,18 @@ int main(int ac, char **av) {
         exit(0);
     parse(ac, av);
     get_address();
+    get_local_ip();
     init_socket();
 
+    char packet[PACKET_SIZE];
     while (1) {
-        // struct icmp packet = create_packet();
+        create_packet((char **) &packet);
         // send ping to the address
         // int ret = sendto(g_sockfd, &packet, sizeof(struct icmp), 0, (struct sockaddr *)ipv4, sizeof(struct sockaddr_in)); 
         // if (ret < 0)
         //     exit_error("ft_ping: sendto");
-        // usleep(1000000);
+        printf("ding dong\n");
+        usleep(1000000);
     }
 
     terminate();
