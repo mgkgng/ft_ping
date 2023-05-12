@@ -22,31 +22,32 @@ static struct addrinfo *get_addr_info(char *host) {
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
 
     int ret = getaddrinfo(host, NULL, &hints, &res);
     if (ret != 0) {
         fprintf(stderr, "ft_ping: cannot resolve %s: Unknown host\n", host);
-        freeaddrinfo(res);
         exit(EXIT_FAILURE);
     } else if (res->ai_family != AF_INET) {
         fprintf(stderr, "Not a valid IPv4 address\n");
         freeaddrinfo(res);
         exit(EXIT_FAILURE);
     }
+
     return (res);
 }
 
-static char *get_dest(struct addrinfo *addr) {
-    struct sockaddr_in *ipv4 = (struct sockaddr_in *) addr->ai_addr;
-    char ipstr[INET_ADDRSTRLEN];
-    char *res = ft_calloc(1, INET_ADDRSTRLEN);
+// static char *get_dest(struct addrinfo *addr) {
+//     struct sockaddr_in *ipv4 = (struct sockaddr_in *) addr->ai_addr;
+//     char ipstr[INET_ADDRSTRLEN];
+//     char *res = ft_calloc(1, INET_ADDRSTRLEN);
 
-    inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
-    ft_strcpy(res, ipstr);
-    return (res);
-}
+//     inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
+//     ft_strcpy(res, ipstr);
+//     printf("dest address: %s\n", res);
+//     return (res);
+// }
 
 t_ping *parse(int ac, char **av) {
     t_ping *res = ft_calloc(1, sizeof(t_ping));
@@ -67,6 +68,6 @@ t_ping *parse(int ac, char **av) {
         }
     }
     res->addr = get_addr_info(res->host);
-    res->dest = get_dest(res->addr);
+    // res->dest = get_dest(res->addr);
     return (res);
 }
