@@ -32,6 +32,9 @@ typedef struct s_ping {
     char *host;
     char *dest;
     struct addrinfo *addr;
+
+    int trasmitted;
+    int received;
 } t_ping;
 
 // Create ICMP header
@@ -55,3 +58,4 @@ t_ping *parse(int ac, char **av);
 int init_socket();
 unsigned short compute_icmp_checksum (unsigned short *paddress, int len);
 void create_packet(char *packet);
+double get_elapsed_time(struct timeval start_time, struct timeval end_time);

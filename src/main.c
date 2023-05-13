@@ -1,13 +1,6 @@
 #include "ft_ping.h"
 #include "libft.h"
 
-int g_id = 0;
-
-void exit_error(char *msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
-}
-
 int main(int ac, char **av) {
     if (ac < 2)
         exit(0);
@@ -18,9 +11,12 @@ int main(int ac, char **av) {
 
     char packet[PACKET_SIZE];
     char buffer[PACKET_SIZE + sizeof(struct ip)];
+    char msg[1024];
+    struct timeval start_time, end_time;
     while (1) {
         create_packet(packet);
 
+        gettimeofday(&start_time, NULL);
         ssize_t bytes_sent = sendto(sockfd, packet, PACKET_SIZE, 0, ping->addr->ai_addr, ping->addr->ai_addrlen);
         if (bytes_sent < 0) {
             perror("Packet sending failed");
@@ -45,27 +41,40 @@ int main(int ac, char **av) {
             perror("Response receiving failed");
             exit(EXIT_FAILURE);
         }
+        printf("bytes received: %ld\n", bytes_received - sizeof(struct ip));
+        gettimeofday(&end_time, NULL);
 
         struct ip *ip_header = (struct ip *) buffer;
         struct icmphdr *icmp_header = (struct icmphdr *) (buffer + (ip_header->ip_hl << 2)); // Skip IP header
+        char *src_addr = NULL;
+        int ttl = 0;
+        double elapsed_time_ms = 0.0;
+        unsigned short id = 0;
+        unsigned short sequence = 0;
 
-        if (icmp_header->type == ICMP_ECHOREPLY) {
-            printf("ICMP echo reply received\n");
-        
+
+        if (icmp_header->type == ICMP_ECHOREPLY) {        
             unsigned short raw_id = icmp_header->un.echo.id;
             unsigned short raw_seq = icmp_header->un.echo.sequence;
 
             // Convert from network byte order (big-endian) to host byte order (we could have used ntohs())
-            unsigned short id = ((raw_id >> 8) & 0xff) | ((raw_id & 0xff) << 8);
-            unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
+            id = ((raw_id >> 8) & 0xff) | ((raw_id & 0xff) << 8);
+            sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
 
-            printf("ID: %d\n", id);
-            printf("Sequence: %d\n", sequence);
+            src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, buffer, sizeof(buffer));
+            ttl = ip_header->ip_ttl;
+            elapsed_time_ms = get_elapsed_time(start_time, end_time);
 
-            printf("Source IP: %s\n", inet_ntop(AF_INET, &ip_header->ip_src, buffer, sizeof(buffer)));
-            printf("Time-To-Live: %d\n", ip_header->ip_ttl);
-
+            if (icmp_header->code != 0) {
+                printf("Error: ICMP code indicates an error. Code: %d\n", icmp_header->code);
+                // Handle the error as needed
+            }
+        } else {
+            printf("Not an ICMP echo reply\n");
+            // Handle the error as needed
         }
+        sprintf(msg, "%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", bytes_received - sizeof(struct ip), src_addr, sequence, ttl, elapsed_time_ms);
+        printf("%s", msg);
         usleep(1000000);
     }
     close(sockfd);

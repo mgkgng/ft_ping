@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-int g_seq = 1;
+int g_seq = 0;
 
 int init_socket() {
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -53,4 +53,8 @@ void create_packet(char *packet) {
     icmp_header->un.echo.sequence = htons(g_seq++);
     icmp_header->checksum = 0;
     icmp_header->checksum = compute_icmp_checksum((unsigned short *) icmp_header, sizeof(struct icmphdr));
+}
+
+double get_elapsed_time(struct timeval start_time, struct timeval end_time) {
+    return (end_time.tv_sec - start_time.tv_sec) * 1000.0 + (end_time.tv_usec - start_time.tv_usec) / 1000.0;
 }
