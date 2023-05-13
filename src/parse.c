@@ -56,13 +56,13 @@ t_ping *parse(int ac, char **av) {
         if (av[i][0] == '-') {
             if (!av[i][1]) {
                 fprintf(stderr, "Error: Invalid flag\n");
-                exit(EXIT_FAILURE);
+                return (NULL);
             }
             res->flags |= get_options(av[i] + 1);
         } else {
             if (res->host) {
                 fprintf(stderr, "Error: Invalid flag\n");
-                exit(EXIT_FAILURE);
+                return (NULL);
             }
             res->host = av[i];
         }

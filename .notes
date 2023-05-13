@@ -74,3 +74,13 @@ ICMP Message Format
 
     Checksum?
     A checksum is a value calculated from a data set or a data packet used to detect errors during data transmission or storage. It serves as a simple integrity check that helps ensure the accuracy and reliability of data. (A checksum allows for the detection of erros by generating a unique value based on the data and comparing it at the receiving end to ensure that it matches the original value.)
+
+------------------------------------
+
+Big endian, little endian?
+Big endian and little endian are two different ways of ordering bytes within a multi-byte data type, such as integers, floating-point numbers or characters in computer memory. They represent differnet byte orderings in memory.
+
+In big endian (also known as network byte order), the most significant byte is stored at the lowest memory address, while the least significant byte is stored at the highest memory address. This means that the byte order follows the same order as reading from left to right. It is called 'big endian' because the most significant byte is considered the biggest part of the data.
+
+In little endian, the byte ordering is reversed. The least significant byte is stored at the lowest memory address, while the most significant byte is stored at the highest memory address. This means that the byte order is opposite to the reading order from left to right. It is called "little endian" because the least significant byte is considered the smallest part of the data.
+

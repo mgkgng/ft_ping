@@ -1,5 +1,7 @@
 #include "ft_ping.h"
 
+int g_seq = 1;
+
 int init_socket() {
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
@@ -48,7 +50,7 @@ void create_packet(char *packet) {
     icmp_header->type = ICMP_ECHO;
     icmp_header->code = 0;
     icmp_header->un.echo.id = htons(getpid() & 0xFFFF);
-    icmp_header->un.echo.sequence = htons(1);
+    icmp_header->un.echo.sequence = htons(g_seq++);
     icmp_header->checksum = 0;
     icmp_header->checksum = compute_icmp_checksum((unsigned short *) icmp_header, sizeof(struct icmphdr));
 }
