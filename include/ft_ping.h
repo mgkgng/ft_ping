@@ -24,9 +24,10 @@
 
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
-#define FLAG_D (1 << 2)
+#define FLAG_C (1 << 2)
 #define FLAG_Q (1 << 3)
-#define Flag_B (1 << 4)
+#define FLAG_I (1 << 4)
+#define Flag_B (1 << 5)
 
 /* ---------- */
 /* Structures */
@@ -34,6 +35,9 @@
 
 typedef struct s_ping {
     int flags;
+    int check_param;
+    int count;
+    float interval;
     int timeout;
     char *host;
     char dest[INET_ADDRSTRLEN];
@@ -98,6 +102,8 @@ void process_icmp_reply(char *buf, ssize_t bytes_received, double elapsed_time);
 
 /* Parsing */
 t_ping parse(int ac, char **av);
+int get_count(char *s);
+float get_interval(char *s);
 
 /* Utils */
 unsigned short compute_icmp_checksum (unsigned short *paddress, int len);
@@ -114,3 +120,5 @@ void print_help();
 int ft_strlen(const char *s);
 void ft_strcpy(char *dst, const char *src);
 void ft_bzero(void *s, size_t n);
+int ft_atoi(const char *str, int strict);
+int ft_isfloat(char *str);

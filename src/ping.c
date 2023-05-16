@@ -94,12 +94,12 @@ void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
     struct ip *ip_header = (struct ip *) buffer;
     struct icmphdr *icmp_header = (struct icmphdr *) (buffer + (ip_header->ip_hl << 2)); // Skip IP header
 
-    // Convert from network byte order (big-endian) to host byte order (we could have used ntohs())
-    unsigned short raw_seq = icmp_header->un.echo.sequence;
-    unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
-
     if (icmp_header->type == ICMP_ECHOREPLY) {
         ping.received++;
+
+        // Convert from network byte order (big-endian) to host byte order (we could have used ntohs())
+        unsigned short raw_seq = icmp_header->un.echo.sequence;
+        unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
 
         char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, buffer, PACKET_SIZE + sizeof(struct ip));
         int ttl = ip_header->ip_ttl;
@@ -107,8 +107,8 @@ void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
         if (icmp_header->code != 0)
             printf("ICMP code indicates an error. Code: %d\n", icmp_header->code);
 
-        print_ping(ret, src_addr, sequence, ttl, elapsed_time);
-    } else {
+        if (!(ping.flags & FLAG_Q))
+            print_ping(ret, src_addr, sequence, ttl, elapsed_time);
+    } else
         handle_icmp_error(icmp_header);
-    }
 }

@@ -26,12 +26,11 @@ int main(int ac, char **av) {
     char packet[PACKET_SIZE];
     char buffer[PACKET_SIZE + sizeof(struct ip)];
     struct timeval start_time, end_time;
-    while (1) {
+    while (1 && (ping.count == 0 || ping.transmitted < ping.count)) {
         create_packet(packet);
 
         send_packet(packet, &start_time);
         ssize_t ret = receive_packet(buffer, &end_time);
-
 
         ping.transmitted++;
         double elapsed_time = get_elapsed_time(start_time, end_time);
@@ -39,6 +38,10 @@ int main(int ac, char **av) {
 
         process_icmp_reply(buffer, ret, elapsed_time);
 
-        usleep(1000000);
+        usleep((!ping.interval) ? 1000000 : ping.interval * 1000000);
     }
+    print_summary();
+    close(sockfd);
+    freeaddrinfo(ping.addr);
+    return (0);
 }

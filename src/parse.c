@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-static int get_options(char *flag_str) {
+static int get_options(char *flag_str, t_ping *ping) {
     int res = 0;
 
     for (int i = 0; flag_str[i]; i++) {
@@ -8,6 +8,23 @@ static int get_options(char *flag_str) {
             res |= FLAG_V;
         else if (flag_str[i] == 'h')
             res |= FLAG_H;
+        else if (flag_str[i] == 'q')
+            res |= FLAG_Q;
+        else if (flag_str[i] == 'c') {
+            res |= FLAG_C;
+            if (flag_str[i + 1]) {
+                ping->count = get_count(flag_str + i + 1);
+                return (res);
+            } else
+                ping->check_param |= FLAG_C;
+        } else if (flag_str[i] == 'i') {
+            res |= FLAG_I;
+            if (flag_str[i + 1]) {
+                ping->interval = get_interval(flag_str + i + 1);
+                return (res);
+            } else
+                ping->check_param |= FLAG_I;
+        }
         else {
             fprintf(stderr, "Error: Invalid flag\n");
             exit(EXIT_FAILURE);
@@ -65,12 +82,20 @@ t_ping parse(int ac, char **av) {
     t_ping res = {0};
 
     for (int i = 1; i < ac; i++) {
-        if (av[i][0] == '-') {
+        if (res.check_param) {
+            if (res.check_param & FLAG_C) {
+                res.count = get_count(av[i]);
+                res.check_param ^= FLAG_C;
+            } else if (res.check_param & FLAG_I) {
+                res.interval = get_interval(av[i]);
+                res.check_param ^= FLAG_I;
+            }
+        } else if (av[i][0] == '-') {
             if (!av[i][1]) {
                 fprintf(stderr, "Error: Invalid flag\n");
                 exit(EXIT_FAILURE);
             }
-            res.flags |= get_options(av[i] + 1);
+            res.flags |= get_options(av[i] + 1, &res);
             if (res.flags & FLAG_H) {
                 print_help();
                 exit(EXIT_SUCCESS);
@@ -82,6 +107,10 @@ t_ping parse(int ac, char **av) {
             }
             res.host = av[i];
         }
+    }
+    if (res.check_param) {
+        fprintf(stderr, "ping: option requires an argument -- '%c'\n", (res.check_param == FLAG_C) ? 'c' : 'i');
+        exit(EXIT_FAILURE);
     }
     res.addr = get_addr_info(res.host);
     get_dest(&res);
