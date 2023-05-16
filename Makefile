@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror
 TARGET = ft_ping
-SRC = src/main.c src/ping.c src/parse.c src/signal.c src/libft.c
+SRC = src/main.c src/ping.c src/parse.c src/utils.c src/libft.c src/msg.c
 OBJ = $(SRC:.c=.o)
 INC = -Iinclude/
 

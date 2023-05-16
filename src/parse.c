@@ -1,5 +1,4 @@
 #include "ft_ping.h"
-#include "libft.h"
 
 static int get_options(char *flag_str) {
     int res = 0;
