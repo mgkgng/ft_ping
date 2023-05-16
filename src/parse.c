@@ -49,25 +49,25 @@ static struct addrinfo *get_addr_info(char *host) {
 //     return (res);
 // }
 
-t_ping *parse(int ac, char **av) {
-    t_ping *res = ft_calloc(1, sizeof(t_ping));
+t_ping parse(int ac, char **av) {
+    t_ping res = {0};
 
     for (int i = 1; i < ac; i++) {
         if (av[i][0] == '-') {
             if (!av[i][1]) {
                 fprintf(stderr, "Error: Invalid flag\n");
-                return (NULL);
+                exit(EXIT_FAILURE);
             }
-            res->flags |= get_options(av[i] + 1);
+            res.flags |= get_options(av[i] + 1);
         } else {
-            if (res->host) {
+            if (res.host) {
                 fprintf(stderr, "Error: Invalid flag\n");
-                return (NULL);
+                exit(EXIT_FAILURE);
             }
-            res->host = av[i];
+            res.host = av[i];
         }
     }
-    res->addr = get_addr_info(res->host);
+    res.addr = get_addr_info(res.host);
     // res->dest = get_dest(res->addr);
     return (res);
 }

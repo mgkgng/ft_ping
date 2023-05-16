@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
+#include <signal.h>
 
 #define PACKET_SIZE 64
 #define ICMP_HEADER_SIZE 8
@@ -22,23 +23,23 @@
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
 
+/* Structures */
+
 typedef struct s_ping {
     int flags;
     int ttl;
     int packet_size;
-    int count;
-    int interval;
     int timeout;
     char *host;
     char *dest;
     struct addrinfo *addr;
 
-    int trasmitted;
+    int packet_seq;
+    int transmitted;
     int received;
 } t_ping;
 
-// Create ICMP header
-struct icmphdr {
+struct icmphdr { // Create ICMP header
     uint8_t type;
     uint8_t code;
     uint16_t checksum;
@@ -54,8 +55,23 @@ struct icmphdr {
     } un;
 };
 
-t_ping *parse(int ac, char **av);
+typedef struct s_rtt { // Round-trip Time
+    double min;
+    double max;
+    double avg;
+    double stddev;
+} t_rtt;
+
+/* Global variables */
+extern t_ping ping;
+extern t_rtt rtt;
+extern int sockfd;
+
+/* Functions */
+t_ping parse(int ac, char **av);
 int init_socket();
 unsigned short compute_icmp_checksum (unsigned short *paddress, int len);
 void create_packet(char *packet);
 double get_elapsed_time(struct timeval start_time, struct timeval end_time);
+void handle_signal(int signal);
+void handle_rtt(double elapsed_time);

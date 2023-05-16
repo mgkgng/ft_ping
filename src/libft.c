@@ -29,11 +29,25 @@ void ft_strcpy(char *dst, const char *src) {
     *dst = 0;
 }
 
-void* ft_calloc(size_t count, size_t size) {
+void *ft_calloc(size_t count, size_t size) {
     void *res = malloc(count * size);
     if (!res)
         return (NULL);
     for (size_t i = 0; i < count * size; i++)
         ((char*)res)[i] = 0;
     return (res);
+}
+
+void *ft_memset(void *b, int c, size_t len)
+{
+	char	*p;
+
+	p = b;
+	while (len-- > 0)
+		*p++ = c;
+	return (b);
+}
+
+void ft_bzero(void *s, size_t n) {
+	ft_memset(s, 0, n);
 }
