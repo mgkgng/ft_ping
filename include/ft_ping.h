@@ -20,10 +20,13 @@
 #define PACKET_SIZE 64
 #define ICMP_HEADER_SIZE 8
 #define MSG_BUFFER 1024
+#define ICMP_TIME_EXCEEDED 88
 
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
-
+#define FLAG_D (1 << 2)
+#define FLAG_Q (1 << 3)
+#define Flag_B (1 << 4)
 
 /* ---------- */
 /* Structures */
@@ -105,11 +108,9 @@ void handle_rtt(double elapsed_time);
 void print_intro();
 void print_ping(ssize_t bytes_received, char* src_addr, unsigned short sequence, int ttl, double elapsed_time_ms);
 void print_summary();
+void print_help();
 
 /* Libft */
 int ft_strlen(const char *s);
-int ft_strcmp(const char *s1, const char *s2);
-int ft_strncmp(const char *s1, const char *s2, size_t n);
 void ft_strcpy(char *dst, const char *src);
-void *ft_calloc(size_t count, size_t size);
 void ft_bzero(void *s, size_t n);

@@ -16,10 +16,27 @@ static int get_options(char *flag_str) {
     return (res);
 }
 
+static int is_valid_ipv4(char *ip_str) {
+    struct sockaddr_in sa;
+    return inet_pton(AF_INET, ip_str, &(sa.sin_addr)) != 0;
+}
+
 static struct addrinfo *get_addr_info(char *host) {
     struct addrinfo hints, *res;
+    
+    if (is_valid_ipv4(host)) {
+        res = (struct addrinfo*) malloc(sizeof(struct addrinfo));
+        res->ai_family = AF_INET;
+        res->ai_socktype = SOCK_RAW;
+        res->ai_protocol = IPPROTO_ICMP;
+        res->ai_addr = (struct sockaddr*) malloc(sizeof(struct sockaddr_in));
+        res->ai_addr->sa_family = AF_INET;
+        ((struct sockaddr_in*) res->ai_addr)->sin_addr.s_addr = inet_addr(host);
+        res->ai_addrlen = sizeof(struct sockaddr_in);
+        return (res);
+    }
 
-    memset(&hints, 0, sizeof hints);
+    ft_bzero(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
@@ -33,7 +50,6 @@ static struct addrinfo *get_addr_info(char *host) {
         freeaddrinfo(res);
         exit(EXIT_FAILURE);
     }
-
     return (res);
 }
 
@@ -55,6 +71,10 @@ t_ping parse(int ac, char **av) {
                 exit(EXIT_FAILURE);
             }
             res.flags |= get_options(av[i] + 1);
+            if (res.flags & FLAG_H) {
+                print_help();
+                exit(EXIT_SUCCESS);
+            }
         } else {
             if (res.host) {
                 fprintf(stderr, "Error: Invalid flag\n");

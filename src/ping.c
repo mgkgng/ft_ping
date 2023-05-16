@@ -13,6 +13,15 @@ int init_socket() {
         fprintf(stderr, "ft_ping: setsockopt: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        perror("Error setting socket options for timeout");
+        exit(EXIT_FAILURE);
+    }
+
     return (sockfd);
 }
 
@@ -53,24 +62,44 @@ ssize_t receive_packet(char *buffer, struct timeval *end_time) {
     message.msg_iovlen = 1; // Number of elements in the array
 
     ssize_t ret = recvmsg(sockfd, &message, 0);
-    if (ret < 0) {
-        perror("Response receiving failed");
-        exit(EXIT_FAILURE);
-    }
     gettimeofday(end_time, NULL);
     return (ret);
+}
+
+void handle_icmp_error(struct icmphdr *icmp_header) {
+    printf("Request timeout for icmp_seq %d\n", ping.transmitted - 1);
+
+    switch(icmp_header->type) {
+        case ICMP_TIME_EXCEEDED:
+            printf("Error: Time to live exceeded\n");
+            break;
+        case ICMP_UNREACH:
+            printf("Error: Destination Unreachable\n");
+            break;
+        case ICMP_SOURCEQUENCH:
+            printf("Error: Source Quench\n");
+            break;
+        case ICMP_REDIRECT:
+            printf("Error: Redirect Message\n");
+            break;
+        case ICMP_PARAMPROB:
+            printf("Error: Parameter Problem\n");
+            break;
+        default:
+            printf("Error: Unknown ICMP message type: %d\n", icmp_header->type);
+    }
 }
 
 void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
     struct ip *ip_header = (struct ip *) buffer;
     struct icmphdr *icmp_header = (struct icmphdr *) (buffer + (ip_header->ip_hl << 2)); // Skip IP header
 
+    // Convert from network byte order (big-endian) to host byte order (we could have used ntohs())
+    unsigned short raw_seq = icmp_header->un.echo.sequence;
+    unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
+
     if (icmp_header->type == ICMP_ECHOREPLY) {
         ping.received++;
-    
-        // Convert from network byte order (big-endian) to host byte order (we could have used ntohs())
-        unsigned short raw_seq = icmp_header->un.echo.sequence;
-        unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
 
         char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, buffer, PACKET_SIZE + sizeof(struct ip));
         int ttl = ip_header->ip_ttl;
@@ -79,6 +108,7 @@ void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
             printf("ICMP code indicates an error. Code: %d\n", icmp_header->code);
 
         print_ping(ret, src_addr, sequence, ttl, elapsed_time);
-    } else
-        printf("Error: received ICMP type %d\n", icmp_header->type);
+    } else {
+        handle_icmp_error(icmp_header);
+    }
 }

@@ -84,3 +84,12 @@ In big endian (also known as network byte order), the most significant byte is s
 
 In little endian, the byte ordering is reversed. The least significant byte is stored at the lowest memory address, while the most significant byte is stored at the highest memory address. This means that the byte order is opposite to the reading order from left to right. It is called "little endian" because the least significant byte is considered the smallest part of the data.
 
+------------------------------------
+
+Dummy addresses for the test:
+
+TEST-NET-1:
+IP range: 192.0.2.0 - 192.0.2.255
+
+TEST-NET-2:
+IP range: 198.51.100.0 - 198.51.100.255
