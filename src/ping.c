@@ -38,13 +38,13 @@ void send_packet(char *packet, struct timeval *start_time) {
     }
 }
 
-ssize_t receive_packet(char* buf, struct timeval* end_time) {
+ssize_t receive_packet(char *buffer, struct timeval *end_time) {
     struct sockaddr_in client_addr = {0};
     socklen_t addr_len = sizeof(client_addr);
     
     struct iovec iov[1]; // Array of data buffers
-    iov[0].iov_base = buf;
-    iov[0].iov_len = sizeof(buf);
+    iov[0].iov_base = buffer;
+    iov[0].iov_len = PACKET_SIZE + sizeof(struct ip);
 
     struct msghdr message = {0};
     message.msg_name = &client_addr; // Socket address where the data should be received
@@ -61,9 +61,9 @@ ssize_t receive_packet(char* buf, struct timeval* end_time) {
     return (ret);
 }
 
-void process_icmp_reply(char *buf, ssize_t ret, double elapsed_time) {
-    struct ip *ip_header = (struct ip *) buf;
-    struct icmphdr *icmp_header = (struct icmphdr *) (buf + (ip_header->ip_hl << 2)); // Skip IP header
+void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
+    struct ip *ip_header = (struct ip *) buffer;
+    struct icmphdr *icmp_header = (struct icmphdr *) (buffer + (ip_header->ip_hl << 2)); // Skip IP header
 
     if (icmp_header->type == ICMP_ECHOREPLY) {
         ping.received++;
@@ -72,14 +72,13 @@ void process_icmp_reply(char *buf, ssize_t ret, double elapsed_time) {
         unsigned short raw_seq = icmp_header->un.echo.sequence;
         unsigned short sequence = ((raw_seq >> 8) & 0xff) | ((raw_seq & 0xff) << 8);
 
-        char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, buf, sizeof(buf));
-        printf("%s ", src_addr);
+        char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, buffer, PACKET_SIZE + sizeof(struct ip));
         int ttl = ip_header->ip_ttl;
 
         if (icmp_header->code != 0)
             printf("ICMP code indicates an error. Code: %d\n", icmp_header->code);
 
-        print_ping(ret - sizeof(struct ip), src_addr, sequence, ttl, elapsed_time);
+        print_ping(ret, src_addr, sequence, ttl, elapsed_time);
     } else
         printf("Error: received ICMP type %d\n", icmp_header->type);
 }

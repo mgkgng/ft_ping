@@ -31,11 +31,9 @@
 
 typedef struct s_ping {
     int flags;
-    int ttl;
-    int packet_size;
     int timeout;
     char *host;
-    char *dest;
+    char dest[INET_ADDRSTRLEN];
     struct addrinfo *addr;
 
     int packet_seq;

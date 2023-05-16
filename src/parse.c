@@ -37,16 +37,13 @@ static struct addrinfo *get_addr_info(char *host) {
     return (res);
 }
 
-// static char *get_dest(struct addrinfo *addr) {
-//     struct sockaddr_in *ipv4 = (struct sockaddr_in *) addr->ai_addr;
-//     char ipstr[INET_ADDRSTRLEN];
-//     char *res = ft_calloc(1, INET_ADDRSTRLEN);
+static void get_dest(t_ping *ping) {
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *) ping->addr->ai_addr;
+    char ipstr[INET_ADDRSTRLEN];
 
-//     inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
-//     ft_strcpy(res, ipstr);
-//     printf("dest address: %s\n", res);
-//     return (res);
-// }
+    inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
+    ft_strcpy(ping->dest, ipstr);
+}
 
 t_ping parse(int ac, char **av) {
     t_ping res = {0};
@@ -67,6 +64,6 @@ t_ping parse(int ac, char **av) {
         }
     }
     res.addr = get_addr_info(res.host);
-    // res->dest = get_dest(res->addr);
+    get_dest(&res);
     return (res);
 }

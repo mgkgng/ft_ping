@@ -10,7 +10,6 @@ void handle_signal(int signal) {
         print_summary();
         close(sockfd);
         freeaddrinfo(ping.addr);
-        free(ping.dest);
         exit(EXIT_SUCCESS);
     }
 }
@@ -18,27 +17,27 @@ void handle_signal(int signal) {
 int main(int ac, char **av) {
     if (ac < 2)
         exit(0);
-    ping = parse(ac, av);        
+    ping = parse(ac, av);
     sockfd = init_socket();
 
     signal(SIGINT, handle_signal);
     print_intro();
 
     char packet[PACKET_SIZE];
-    char buf[PACKET_SIZE + sizeof(struct ip)];
+    char buffer[PACKET_SIZE + sizeof(struct ip)];
     struct timeval start_time, end_time;
     while (1) {
         create_packet(packet);
 
         send_packet(packet, &start_time);
-        ssize_t ret = receive_packet(buf, &end_time);
+        ssize_t ret = receive_packet(buffer, &end_time);
+
 
         ping.transmitted++;
         double elapsed_time = get_elapsed_time(start_time, end_time);
         handle_rtt(elapsed_time);
 
-        printf("%lu\n", ret);
-        process_icmp_reply(buf, ret, elapsed_time);
+        process_icmp_reply(buffer, ret, elapsed_time);
 
         usleep(1000000);
     }

@@ -5,9 +5,9 @@ void print_intro() {
     printf("%s", msg.intro);
 }
 
-void print_ping(ssize_t ret, char* src_addr, unsigned short sequence, int ttl, double elapsed_time_ms) {
+void print_ping(ssize_t ret, char *src_addr, unsigned short sequence, int ttl, double elapsed_time) {
     ft_bzero(msg.ping, MSG_BUFFER);
-    sprintf(msg.ping, "%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", ret - sizeof(struct ip), src_addr, sequence, ttl, elapsed_time_ms);
+    sprintf(msg.ping, "%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", ret - sizeof(struct ip), src_addr, sequence, ttl, elapsed_time);
     printf("%s", msg.ping);
 }
 
