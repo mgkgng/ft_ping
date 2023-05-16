@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-// Flag C
+// Flag C, T
 int get_count(char *s) {
     int count = ft_atoi(s, 1);
     if (count <= 0) {

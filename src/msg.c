@@ -31,7 +31,7 @@ Options:\n\
     -v: Enable verbose mode\n\
     -d: Enable debug mode (SO_DEBUG)\n\
     -q: Enable quiet mode\n\
-    -b: Enable broadcast mode\n\
-    -t <ttl>: Set Time To Live (TTL) for maximum IP router hops\n\
-    -4: Specify an IPv4 address\n");
+    -i <interval>: Set ping interval\n\
+    -t <timeout>: Set timeout\n\
+    -c <count>: Set count\n");
 }

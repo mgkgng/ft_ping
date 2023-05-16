@@ -24,7 +24,15 @@ static int get_options(char *flag_str, t_ping *ping) {
                 return (res);
             } else
                 ping->check_param |= FLAG_I;
-        }
+        } else if (flag_str[i] == 't') {
+            res |= FLAG_T;
+            if (flag_str[i + 1]) {
+                ping->timeout = get_count(flag_str + i + 1);
+                return (res);
+            } else
+                ping->check_param |= FLAG_T;
+        } else if (flag_str[i] == 'd')
+            res |= FLAG_D;
         else {
             fprintf(stderr, "Error: Invalid flag\n");
             exit(EXIT_FAILURE);
@@ -89,6 +97,9 @@ t_ping parse(int ac, char **av) {
             } else if (res.check_param & FLAG_I) {
                 res.interval = get_interval(av[i]);
                 res.check_param ^= FLAG_I;
+            } else if (res.check_param & FLAG_T) {
+                res.timeout = get_count(av[i]);
+                res.check_param ^= FLAG_T;
             }
         } else if (av[i][0] == '-') {
             if (!av[i][1]) {

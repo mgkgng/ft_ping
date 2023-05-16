@@ -22,6 +22,14 @@ int init_socket() {
         exit(EXIT_FAILURE);
     }
 
+    if (ping.flags & FLAG_D) {
+        int debug_option = 1;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_DEBUG, &debug_option, sizeof(debug_option)) < 0) {
+            perror("Error setting socket options for debug mode");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     return (sockfd);
 }
 
@@ -43,7 +51,6 @@ void send_packet(char *packet, struct timeval *start_time) {
     ssize_t bytes_sent = sendto(sockfd, packet, PACKET_SIZE, 0, ping.addr->ai_addr, ping.addr->ai_addrlen);
     if (bytes_sent < 0) {
         perror("Packet sending failed");
-        exit(EXIT_FAILURE);
     }
 }
 
