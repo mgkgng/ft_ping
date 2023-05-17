@@ -37,7 +37,7 @@ typedef struct s_ping {
     int flags;
     int check_param;
     int count;
-    int timeout;
+    int ttl;
     float interval;
     char *host;
     char dest[INET_ADDRSTRLEN];
@@ -79,7 +79,7 @@ void process_icmp_reply(char *buf, ssize_t bytes_received, double elapsed_time);
 t_ping parse(int ac, char **av);
 int get_count(char *s);
 float get_interval(char *s);
-int get_preload(char *s);
+int get_ttl(char *s);
 
 /* Utils */
 unsigned short compute_icmp_checksum (unsigned short *paddress, int len);

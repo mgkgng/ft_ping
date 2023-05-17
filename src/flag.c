@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-// Flag C, T
+// Flag C
 int get_count(char *s) {
     int count = ft_atoi(s, 1);
     if (count <= 0) {
@@ -23,4 +23,14 @@ float get_interval(char *s) {
         exit(EXIT_FAILURE);
     }
     return (interval);
+}
+
+// Flag T
+int get_ttl(char *s) {
+    int ttl = ft_atoi(s, 1);
+    if (ttl <= 0) {
+        fprintf(stderr, "ping: invalid ttl value: '%s'\n", s);
+        exit(EXIT_FAILURE);
+    }
+    return (ttl);
 }

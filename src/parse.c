@@ -27,7 +27,7 @@ static int get_options(char *flag_str, t_ping *ping) {
         } else if (flag_str[i] == 't') {
             res |= FLAG_T;
             if (flag_str[i + 1]) {
-                ping->timeout = get_count(flag_str + i + 1);
+                ping->ttl = get_ttl(flag_str + i + 1);
                 return (res);
             } else
                 ping->check_param |= FLAG_T;
@@ -105,7 +105,7 @@ t_ping parse(int ac, char **av) {
                 res.interval = get_interval(av[i]);
                 res.check_param ^= FLAG_I;
             } else if (res.check_param & FLAG_T) {
-                res.timeout = get_count(av[i]);
+                res.ttl = get_ttl(av[i]);
                 res.check_param ^= FLAG_T;
             }
         } else if (av[i][0] == '-') {
@@ -128,6 +128,9 @@ t_ping parse(int ac, char **av) {
     }
     if (res.check_param) {
         fprintf(stderr, "ping: option requires an argument -- '%c'\n", (res.check_param == FLAG_C) ? 'c' : 'i');
+        exit(EXIT_FAILURE);
+    } else if (!res.host) {
+        fprintf(stderr, "ft_ping: usage: ft_ping [-hvq] [-c count] [-i interval] [-t ttl] destination\n");
         exit(EXIT_FAILURE);
     }
     res.addr = get_addr_info(res.host);

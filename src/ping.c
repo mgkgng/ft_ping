@@ -8,7 +8,7 @@ int init_socket() {
     }
 
     // Set socket options to enable ICMP protocol
-    const int ttl = 255;
+    const int ttl = (ping.flags & FLAG_T) ? ping.ttl : 255;
     if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
         fprintf(stderr, "ft_ping: setsockopt: %s\n", strerror(errno));
         exit(EXIT_FAILURE);

@@ -28,8 +28,7 @@ int main(int ac, char **av) {
     char packet[PACKET_SIZE];
     char buffer[PACKET_SIZE + sizeof(struct ip)];
     struct timeval start_time, end_time;
-    while (1 && (ping.count == 0 || ping.transmitted < ping.count)
-        && (ping.timeout == 0 || ping.transmitted < ping.timeout)) {
+    while (1 && (ping.count == 0 || ping.transmitted < ping.count)) {
         create_packet(packet);
 
         send_packet(packet, &start_time);
@@ -41,7 +40,7 @@ int main(int ac, char **av) {
 
         process_icmp_reply(buffer, ret, elapsed_time);
 
-        usleep((!ping.interval) ? 1000000 : ping.interval * 1000000);
+        usleep((ping.flags & FLAG_I) ? ping.interval * 1000000 : 1000000);
     }
     terminate_success();
 }

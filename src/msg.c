@@ -24,7 +24,7 @@ It tests IP-level connectivity and packet delivery, ensuring successful communic
 Use the command to verify connectivity and measure response times.\n \
 \n\
 Usage: \
-ping <destination> [-h] [-v] [-d] [-q] [-b] [-t <ttl>] [-4]\n\
+ping <destination> [-h] [-v] [-d] [-q] [-i <interval>] [-t <ttl>] [-c <count>]\n\
 \n\
 Options:\n\
     -h: Display help message\n\
@@ -32,6 +32,6 @@ Options:\n\
     -d: Enable debug mode (SO_DEBUG)\n\
     -q: Enable quiet mode\n\
     -i <interval>: Set ping interval\n\
-    -t <timeout>: Set timeout\n\
+    -t <ttl>: Set TTL\n\
     -c <count>: Set count\n");
 }
