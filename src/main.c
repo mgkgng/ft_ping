@@ -2,16 +2,18 @@
 
 t_ping ping = {0};
 t_rtt rtt = {0};
-t_msg msg = {0};
 int sockfd = 0;
 
+void terminate_success() {
+    print_summary();
+    close(sockfd);
+    freeaddrinfo(ping.addr);
+    exit(EXIT_SUCCESS);
+}
+
 void handle_signal(int signal) {
-    if (signal == SIGINT) {
-        print_summary();
-        close(sockfd);
-        freeaddrinfo(ping.addr);
-        exit(EXIT_SUCCESS);
-    }
+    if (signal == SIGINT)
+        terminate_success();
 }
 
 int main(int ac, char **av) {
@@ -41,8 +43,5 @@ int main(int ac, char **av) {
 
         usleep((!ping.interval) ? 1000000 : ping.interval * 1000000);
     }
-    print_summary();
-    close(sockfd);
-    freeaddrinfo(ping.addr);
-    return (0);
+    terminate_success();
 }

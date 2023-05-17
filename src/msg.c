@@ -1,7 +1,7 @@
 #include "ft_ping.h"
 
 void print_intro() {
-    printf("PING %s (%s) %d bytes of data.\n", ping.host, ping.dest, PACKET_SIZE - ICMP_HEADER_SIZE);
+    printf("PING %s (%s) %d (%d) bytes of data.\n", ping.host, ping.dest, PACKET_SIZE - ICMP_HEADER_SIZE, PACKET_SIZE);
 }
 
 void print_ping(ssize_t ret, char *src_addr, unsigned short sequence, int ttl, double elapsed_time) {

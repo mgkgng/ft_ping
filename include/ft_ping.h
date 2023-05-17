@@ -19,8 +19,6 @@
 
 #define PACKET_SIZE 64
 #define ICMP_HEADER_SIZE 8
-#define MSG_BUFFER 1024
-#define ICMP_TIME_EXCEEDED 88
 
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
@@ -48,35 +46,12 @@ typedef struct s_ping {
     int received;
 } t_ping;
 
-struct icmphdr {
-    uint8_t type;
-    uint8_t code;
-    uint16_t checksum;
-    union {
-        struct {
-            uint16_t id;
-            uint16_t sequence;
-        } echo;
-        uint32_t gateway;
-        struct {
-            uint16_t mtu;
-        } frag;
-    } un;
-};
-
 typedef struct s_rtt {
     double min;
     double max;
     double avg;
     double stddev;
 } t_rtt;
-
-typedef struct s_msg {
-    char intro[MSG_BUFFER];
-    char ping[MSG_BUFFER];
-    char summary[MSG_BUFFER];
-} t_msg;
-
 
 /* ---------------- */
 /* Global variables */

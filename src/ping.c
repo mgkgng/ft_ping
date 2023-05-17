@@ -73,27 +73,28 @@ ssize_t receive_packet(char *buffer, struct timeval *end_time) {
     return (ret);
 }
 
-void handle_icmp_error(struct icmphdr *icmp_header) {
-    printf("Request timeout for icmp_seq %d\n", ping.transmitted - 1);
+void handle_icmp_error(struct ip *ip_header, struct icmphdr *icmp_header) {
+    char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, NULL, 0);
+    printf("From %s icmp_seq=%d ", src_addr, ping.transmitted - 1);
 
     switch(icmp_header->type) {
         case ICMP_TIME_EXCEEDED:
-            printf("Error: Time to live exceeded\n");
+            printf("Time to live exceeded\n");
             break;
         case ICMP_UNREACH:
-            printf("Error: Destination Unreachable\n");
+            printf("Destination Net Unreachable\n");
             break;
         case ICMP_SOURCEQUENCH:
-            printf("Error: Source Quench\n");
+            printf("Source Quench\n");
             break;
         case ICMP_REDIRECT:
-            printf("Error: Redirect Message\n");
+            printf("Redirect Message\n");
             break;
         case ICMP_PARAMPROB:
-            printf("Error: Parameter Problem\n");
+            printf("Parameter Problem\n");
             break;
         default:
-            printf("Error: Unknown ICMP message type: %d\n", icmp_header->type);
+            printf("Unknown ICMP message type: %d\n", icmp_header->type);
     }
 }
 
@@ -117,5 +118,5 @@ void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
         if (!(ping.flags & FLAG_Q))
             print_ping(ret, src_addr, sequence, ttl, elapsed_time);
     } else
-        handle_icmp_error(icmp_header);
+        handle_icmp_error(ip_header, icmp_header);
 }
