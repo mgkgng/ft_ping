@@ -1,11 +1,11 @@
 #include "ft_ping.h"
 
 void print_intro() {
-    printf("PING %s (%s) %d (%d) bytes of data.\n", ping.host, ping.dest, PACKET_SIZE - ICMP_HEADER_SIZE, PACKET_SIZE);
+    printf("PING %s (%s) %d(%d) bytes of data.\n", ping.host, ping.dest, PACKET_SIZE - ICMP_HEADER_SIZE, PACKET_SIZE + IP_HEADER_SIZE);
 }
 
 void print_ping(ssize_t ret, char *src_addr, unsigned short sequence, int ttl, double elapsed_time) {
-    printf("%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", ret - sizeof(struct ip), src_addr, sequence, ttl, elapsed_time);
+    printf("%lu bytes from %s (%s): icmp_seq=%d ttl=%d time=%.3f ms\n", ret - sizeof(struct ip), ping.name, src_addr, sequence, ttl, elapsed_time);
 }
 
 void print_summary() {

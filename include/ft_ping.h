@@ -19,6 +19,7 @@
 
 #define PACKET_SIZE 64
 #define ICMP_HEADER_SIZE 8
+#define IP_HEADER_SIZE 20
 
 #define FLAG_V (1 << 0)
 #define FLAG_H (1 << 1)
@@ -40,6 +41,7 @@ typedef struct s_ping {
     float interval;
     char *host;
     char dest[INET_ADDRSTRLEN];
+    char name[NI_MAXHOST];
     struct addrinfo *addr;
     int packet_seq;
     int transmitted;

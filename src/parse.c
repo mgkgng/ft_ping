@@ -78,12 +78,19 @@ static struct addrinfo *get_addr_info(char *host) {
     return (res);
 }
 
-static void get_dest(t_ping *ping) {
+static void get_dest_info(t_ping *ping) {
     struct sockaddr_in *ipv4 = (struct sockaddr_in *) ping->addr->ai_addr;
     char ipstr[INET_ADDRSTRLEN];
+    char hostname[NI_MAXHOST];
 
     inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN);
     ft_strcpy(ping->dest, ipstr);
+
+    if (getnameinfo(ping->addr->ai_addr, ping->addr->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0) != 0) {
+        fprintf(stderr, "getnameinfo error");
+        exit(EXIT_FAILURE);
+    }
+    ft_strcpy(ping->name, hostname);
 }
 
 t_ping parse(int ac, char **av) {
@@ -124,6 +131,6 @@ t_ping parse(int ac, char **av) {
         exit(EXIT_FAILURE);
     }
     res.addr = get_addr_info(res.host);
-    get_dest(&res);
+    get_dest_info(&res);
     return (res);
 }
