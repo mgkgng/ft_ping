@@ -59,7 +59,6 @@ typedef struct s_rtt {
 
 extern t_ping ping;
 extern t_rtt rtt;
-extern t_msg msg;
 extern int sockfd;
 
 
