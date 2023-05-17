@@ -74,7 +74,7 @@ ssize_t receive_packet(char *buffer, struct timeval *end_time) {
 }
 
 void handle_icmp_error(struct icmphdr *icmp_header) {
-    printf("From %s icmp_seq=%d ", ping.name, ping.transmitted - 1);
+    printf("From %s icmp_seq=%d ", ping.name, ping.transmitted);
 
     switch(icmp_header->type) {
         case ICMP_TIME_EXCEEDED:
