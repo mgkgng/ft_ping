@@ -73,9 +73,8 @@ ssize_t receive_packet(char *buffer, struct timeval *end_time) {
     return (ret);
 }
 
-void handle_icmp_error(struct ip *ip_header, struct icmphdr *icmp_header) {
-    char *src_addr = (char *) inet_ntop(AF_INET, &ip_header->ip_src, NULL, 0);
-    printf("From %s icmp_seq=%d ", src_addr, ping.transmitted - 1);
+void handle_icmp_error(struct icmphdr *icmp_header) {
+    printf("From %s icmp_seq=%d ", ping.name, ping.transmitted - 1);
 
     switch(icmp_header->type) {
         case ICMP_TIME_EXCEEDED:
@@ -118,5 +117,5 @@ void process_icmp_reply(char *buffer, ssize_t ret, double elapsed_time) {
         if (!(ping.flags & FLAG_Q))
             print_ping(ret, src_addr, sequence, ttl, elapsed_time);
     } else
-        handle_icmp_error(ip_header, icmp_header);
+        handle_icmp_error(icmp_header);
 }
